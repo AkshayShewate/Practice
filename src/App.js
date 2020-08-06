@@ -1,82 +1,61 @@
-import React, { useState } from 'react';
-import logo from './logo.svg';
-import './App.css';
+  
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-
-const API_BASE = "http://localhost:5000"
-
-function submitForm(contentType, data, setResponse) {
- axios({
- url: `${API_BASE}/upload`,
- method: 'POST',
- data: data,
- headers: {
- 'Content-Type': contentType
- }
- }).then((response) => {
- setResponse(response.data);
- }).catch((error) => {
- setResponse("error");
- })
-}
+import './App.css';
+import List from './components/List';
+import withListLoading from './components/withListLoading';
 
 function App() {
- const [title, setTitle] = useState("");
- const [file, setFile] = useState(null);
- const [desc, setDesc] = useState("");
-
- function uploadWithFormData(){
-  const formData = new FormData();
-  formData.append("title", title);
-  formData.append("file", file);
-  formData.append("desc", desc);
+  const ListLoading = withListLoading(List);
+  const [appState, setAppState] = useState({
+    loading: false,
+    repos: null,
+  });
  
-  submitForm("multipart/form-data", formData, (msg) => console.log(msg));
-  }
 
-  async function uploadWithJSON(){
-    const toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    });
-   
-    const data = {
-    title: title,
-    file: await toBase64(file),
-    desc: desc
-    }
-   
-    submitForm("application/json", data, (msg) => console.log(msg));
-    }
+  //with Axios 
 
- return (
- <div className="App">
- <h2>Upload Form</h2>
- <form>
- <label>
- File Title
- <input type="text" vaue={title} 
- onChange={(e) => { setTitle(e.target.value )}} 
- placeholder="Give a title to your upload" />
- </label>
+  // useEffect(() => {
+  //   setAppState({ loading: true });
+  //   const apiUrl = `https://api.github.com/users/AkshayShewate/repos`;
+  //   axios.get(apiUrl).then((repos) => {
+  //     const allRepos = repos.data;
+  //     setAppState({ loading: false, repos: allRepos });
+  //   });
+  // }, [setAppState]);
 
- <label>
- File
- <input type="file" name="file" onChange={(e) => setFile(e.target.files[0])} />
- </label>
 
- <label>
- Description
- <textarea value={desc} onChange={(e) => setDesc(e.target.value)}></textarea>
- </label>
+  //with fetch uri
 
- <input type="button" value="Upload as Form" onClick={uploadWithFormData} />
- <input type="button" value="Upload as JSON" onClick={uploadWithJSON}/>
- </form>
- </div>
- );
+  useEffect(() => {
+    setAppState({ loading: true });
+    const apiUrl = `https://api.github.com/users/AkshayShewate/repos`;
+    fetch(apiUrl)
+      .then((res) => res.json())
+      .then((repos) => {
+        setAppState({ loading: false, repos: repos });
+      });
+  }, [setAppState]);
+
+  return (
+    <div className='App'>
+      <div className='container'>
+        <h1>My Repositories</h1>
+      </div>
+      <div className='repo-container'>
+        <ListLoading isLoading={appState.loading} repos={appState.repos} />
+      </div>
+      <footer>
+        <div className='footer'>
+          Built{' '}
+          <span role='img' aria-label='love'>
+            💚😎
+          </span>{' '}
+          with by Akii  Akii
+        </div>
+      </footer>
+    </div>
+  );
 }
 
 export default App;
